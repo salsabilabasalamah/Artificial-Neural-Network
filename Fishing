@@ -1,0 +1,58 @@
+### Salsabila Basalamah
+### Artificial-Neural-Network dengan menggunakan data Fishing
+### Sumber data : www.kaggle.com
+
+### Input Data
+fishing<- read.csv("...\\Fishingg.csv")
+head(fishing)
+dim(fishing)
+
+fishing<- data.frame(data$mode ,data$price, data$catch, data$income)
+str(fishing)
+fishing<- data.frame(mode, price, catch, income)
+
+sampel <- c(sample(1:134,67), sample(135:552,209), sample(553:1004,226), sample(1005:1182,89))
+sampel # diambil dari berdasar mode pada model
+fishing.train <-fishing[sampel,]
+fishing.test<-fishing[-sampel,]
+fishing1<-nnet(mode~.,data=fishing.train,size=5, decay=5e-4, maxit=200)
+y<- fishing.test$mode
+p<-predict(fishing1, fishing.test, type="class")
+tablehasil<- table (y,p)
+tablehasil
+sum(diag(table(y,p)))/591
+jumlaheror<- mean(y!=p)
+
+library(devtools)
+library(reshape)
+library(scales)
+source_url(
+  'https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
+plot.nnet(fishing1)
+summary(fishing1)
+
+## Jika price = 50.32, catch = 0.0451 dan income = 4583.332, apakah pilihan mode rekreasi memancingnya?
+price <- 50.32
+catch<- 0.0451
+income<- 4583.332
+
+fishing.baru <- data.frame(price, catch, income)
+prediksi <- predict(fishing1, fishing.baru)
+prediksi
+errorklasifikasi<- function(jumlahhidden)
+{
+  fishing1<-nnet(mode~., data=fishing.train, size=jumlahhidden,
+                 decay=5e-4, trace=F)
+  y<- fishing.test$mode
+  p<- predict(fishing1, fishing.test, type="class")
+  err<- mean(y!=p)
+  c(jumlahhidden, err)
+}
+errorklasifikasi(5)
+errorklasifikasi(2)
+errorklasifikasi(7)
+
+hasilakhir<- t(sapply(2:10, FUN=errorklasifikasi))
+
+plot(hasilakhir, type="b", xlab="jumlah hidden unit", ylab="error",
+     main="plot jumlah hidden unit vs error")
